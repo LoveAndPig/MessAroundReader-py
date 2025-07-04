@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QMainWindow, QMenu, QFileDialog
-from PyQt6.QtCore import Qt, QPoint, QPointF, pyqtSlot
+from PyQt6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication
+from PyQt6.QtCore import Qt, QPoint, pyqtSlot
 import typing
 
 
@@ -12,6 +12,8 @@ class MessAroundReader(QMainWindow):
         self.__dragStart = QPoint(0, 0)
         self.__windowDragStart = QPoint(0, 0)
         self.__isForcedToTop = False
+
+        self.init_window_style()
 
     def mess_around_show(self):
         super().show()
@@ -28,12 +30,12 @@ class MessAroundReader(QMainWindow):
         if a0.button() == Qt.MouseButton.LeftButton and self.__isLeftPressed:
             current_pos = a0.pos()
             current_win_pos = current_pos - self.__dragStart + self.__windowDragStart
-            self.move(current_win_pos)
+            self.window().move(current_win_pos)
 
     def mouseReleaseEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
-        if a0.button() == Qt.MouseButton.LeftButton:
+        if a0.button() == Qt.MouseButton.LeftButton and self.__isLeftPressed:
             self.__isLeftPressed = False
-        elif a0.button() == Qt.MouseButton.RightButton:
+        elif a0.button() == Qt.MouseButton.RightButton and self.__isRightPressed:
             self.__isRightPressed = False
             self.show_context_menu(a0.pos())
 
@@ -44,7 +46,8 @@ class MessAroundReader(QMainWindow):
         menu = QMenu(self)
         self.show_file_select_menu(menu)
         self.show_force_to_top_menu(menu)
-
+        self.show_style_edit_menu(menu)
+        self.show_exit_menu(menu)
         menu.exec(pos)
 
     def show_file_select_menu(self, menu):
@@ -52,7 +55,7 @@ class MessAroundReader(QMainWindow):
         action.triggered.connect(self.select_file())
 
     def show_force_to_top_menu(self, menu):
-        action = None
+        # action = None
         if self.__isForcedToTop:
             action = menu.addAction('取消置顶')
         else:
@@ -64,7 +67,11 @@ class MessAroundReader(QMainWindow):
     def show_style_edit_menu(self, menu):
         pass
 
-    @pyqtSlot
+    def show_exit_menu(self, menu):
+        action = menu.addAction('退出')
+        action.triggered.connect(QApplication.exit())
+
+    # @pyqtSlot
     def select_file(self):
         # dialog = QFileDialog(self)
         file_name = QFileDialog.getOpenFileName(self,
