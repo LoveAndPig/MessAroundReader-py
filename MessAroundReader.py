@@ -1,22 +1,34 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication
-from PyQt6.QtCore import Qt, QPoint, pyqtSlot
+from PyQt6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel
+from PyQt6.QtCore import Qt, QPoint, pyqtSlot, pyqtSignal
+
+from file_readers.Resource import Resource, ResourceType
 from ui.StyleDialog import StyleDialog
 from config.configuration import config
+from file_readers.file_reader_factory import file_reader_factory
 import typing
 
 
 class MessAroundReader(QMainWindow):
+    __window_style_changed = pyqtSignal()
+    __contents_changed = pyqtSignal()
+    __isLeftPressed = False
+    __isRightPressed = False
+    __dragStart = QPoint(0, 0)
+    __windowDragStart = QPoint(0, 0)
+    __isForcedToTop = False
+    __index = 0
+
     def __init__(self):
         super().__init__()
-        self.__isLeftPressed = False
-        self.__isRightPressed = False
-        self.__dragStart = QPoint(0, 0)
-        self.__windowDragStart = QPoint(0, 0)
-        self.__isForcedToTop = False
+        self.__current_reader = None
+        self.__content_label = QLabel(self)
         self.__styleDialog = StyleDialog()
+        self.init_style_dialog()
 
         self.init_window_style()
+        self.init_signals_and_slots()
+        self.show_file_contents()
 
     def mess_around_show(self):
         self.show()
@@ -26,10 +38,6 @@ class MessAroundReader(QMainWindow):
             self.__isLeftPressed = True
             self.__dragStart = a0.globalPosition().toPoint()
             self.__windowDragStart = self.pos()
-            print(f"drag start x {self.__dragStart.x()}, "
-                  f"drag start y {self.__dragStart.y()}, "
-                  f"window start x {self.__windowDragStart.x()}, "
-                  f"window start y {self.__windowDragStart.y()}")
         elif a0.button() == Qt.MouseButton.RightButton:
             self.__isRightPressed = True
 
@@ -46,8 +54,18 @@ class MessAroundReader(QMainWindow):
             self.__isRightPressed = False
             self.show_context_menu(a0.globalPosition().toPoint())
 
-    def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]) -> None:
-        pass
+    def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]):
+        if self.__current_reader is None:
+            return
+
+        lines = len(self.__current_reader.get_parsed_data())
+
+        if a0.angleDelta().y() > 0:
+            self.__index = self.__index - 1 if self.__index > 0 else 0
+        else:
+            self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
+
+        self.emit_contents_changed()
 
     def show_context_menu(self, pos):
         menu = QMenu()
@@ -76,9 +94,32 @@ class MessAroundReader(QMainWindow):
 
     def show_exit_menu(self, menu):
         action = menu.addAction('退出')
-        action.triggered.connect(lambda: QApplication.exit())
+        action.triggered.connect(lambda: self.quit_app())
 
-    # @pyqtSlot
+    def show_file_contents(self):
+        if self.__current_reader is not None:
+            parsed_data: list[Resource] = self.__current_reader.get_parsed_data()
+            self.refresh_content_label(parsed_data[self.__index])
+        else:
+            default_resource = Resource(ResourceType.TEXT, '选择一个文件')
+            self.refresh_content_label(default_resource)
+
+        self.__content_label.show()
+
+    def refresh_content_label(self, resource: Resource):
+        self.__content_label.setText(resource.get_data())
+        style_sheet = f"color: {config.get_font_color().name()}; "
+        font = config.get_font()
+        font.setPointSize(config.get_font_size())
+        if resource.get_type() != ResourceType.TEXT:
+            font.setBold(True)
+            style_sheet += "text-decoration: underline; "
+        self.__content_label.setFont(font)
+        print(style_sheet)
+        self.__content_label.setStyleSheet(style_sheet)
+        # self.__content_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.__content_label.adjustSize()
+
     def select_file(self):
         file_name = QFileDialog.getOpenFileName(self,
                                                 '选择文件',
@@ -86,6 +127,11 @@ class MessAroundReader(QMainWindow):
                                                 '电子书 (*.txt *.epub *.mobi);;')
         if len(file_name) != 0:
             print(file_name[0])
+            self.__current_reader = file_reader_factory.get_file_reader(file_name[0])
+            if self.__current_reader is not None:
+                self.__current_reader.read_file(file_name[0])
+                self.__index = 0
+                self.emit_contents_changed()
 
     def force_to_top(self):
         self.__isForcedToTop = not self.__isForcedToTop
@@ -95,6 +141,14 @@ class MessAroundReader(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowStaysOnTopHint)
         self.show()
 
+    def quit_app(self):
+        QApplication.exit()
+        config.save_config()
+
+    def refresh_window_style(self):
+        self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
+        self.show()
+
     def init_window_style(self):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.resize(400, 20)
@@ -102,5 +156,17 @@ class MessAroundReader(QMainWindow):
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
         self.move(config.get_window_pos())
 
+    def init_signals_and_slots(self):
+        self.__window_style_changed.connect(self.refresh_window_style)
+        self.__contents_changed.connect(self.show_file_contents)
+
     def init_style_dialog(self):
-        pass
+        if self.__styleDialog is not None:
+            self.__styleDialog.set_window_style_changed_callback(self.emit_window_style_changed)
+            self.__styleDialog.set_contents_changed_callback(self.emit_contents_changed)
+
+    def emit_window_style_changed(self):
+        self.__window_style_changed.emit()
+
+    def emit_contents_changed(self):
+        self.__contents_changed.emit()

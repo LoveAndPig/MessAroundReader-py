@@ -7,6 +7,14 @@ class StyleDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.init_ui()
+        self.__window_style_changed_callback = None
+        self.__contents_changed_callback = None
+
+    def set_window_style_changed_callback(self, callback):
+        self.__window_style_changed_callback = callback
+
+    def set_contents_changed_callback(self, callback):
+        self.__contents_changed_callback = callback
 
     def init_ui(self):
         self.setWindowTitle('设置样式')
@@ -37,6 +45,8 @@ class StyleDialog(QDialog):
                 bg_color_btn.setStyleSheet(f"background-color: {color.name()}")
                 config.set_bg_color(color)
                 config.save_config()
+                if self.__window_style_changed_callback:
+                    self.__window_style_changed_callback()
                 self.exec()
 
         bg_color_btn.clicked.connect(lambda: change_bg_color())
@@ -61,6 +71,8 @@ class StyleDialog(QDialog):
                 font_color_btn.setStyleSheet(f"background-color: {color.name()}")
                 config.set_font_color(color)
                 config.save_config()
+                if self.__contents_changed_callback:
+                    self.__contents_changed_callback()
                 self.exec()
 
         font_color_btn.clicked.connect(lambda: change_font_color())
@@ -82,6 +94,8 @@ class StyleDialog(QDialog):
         def change_font(font):
             config.set_font(font.family())
             config.save_config()
+            if self.__contents_changed_callback:
+                self.__contents_changed_callback()
 
         font_combo_box.currentFontChanged.connect(lambda: change_font(font_combo_box.currentFont()))
         font_combo_box.show()
