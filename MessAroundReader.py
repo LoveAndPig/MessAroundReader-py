@@ -1,6 +1,7 @@
-from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel
-from PyQt6.QtCore import Qt, QPoint, pyqtSlot, pyqtSignal
+from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
+from PySide6.QtCore import Qt, QPoint, Slot, Signal
 
 from file_readers.Resource import Resource, ResourceType
 from ui.StyleDialog import StyleDialog
@@ -10,8 +11,8 @@ import typing
 
 
 class MessAroundReader(QMainWindow):
-    __window_style_changed = pyqtSignal()
-    __contents_changed = pyqtSignal()
+    __window_style_changed = Signal()
+    __contents_changed = Signal()
     __isLeftPressed = False
     __isRightPressed = False
     __dragStart = QPoint(0, 0)
@@ -26,12 +27,16 @@ class MessAroundReader(QMainWindow):
         self.__styleDialog = StyleDialog()
         self.init_style_dialog()
 
+        self.__tray_icon = QSystemTrayIcon(self)
+        self.set_reader_tray_icon()
+
         self.init_window_style()
         self.init_signals_and_slots()
         self.show_file_contents()
 
     def mess_around_show(self):
         self.show()
+        self.__tray_icon.show()
 
     def mousePressEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
         if a0.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -53,6 +58,10 @@ class MessAroundReader(QMainWindow):
         elif a0.button() == Qt.MouseButton.RightButton and self.__isRightPressed:
             self.__isRightPressed = False
             self.show_context_menu(a0.globalPosition().toPoint())
+
+    def mouseDoubleClickEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
+        if a0.button() == Qt.MouseButton.LeftButton:
+            self.hide()
 
     def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]):
         if self.__current_reader is None:
@@ -141,6 +150,10 @@ class MessAroundReader(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowStaysOnTopHint)
         self.show()
 
+    def recover_window(self):
+        self.show()
+        self.activateWindow()
+
     def quit_app(self):
         QApplication.exit()
         config.save_config()
@@ -155,6 +168,22 @@ class MessAroundReader(QMainWindow):
         self.setMinimumWidth(200)
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
         self.move(config.get_window_pos())
+
+    def set_reader_tray_icon(self):
+        self.__tray_icon.setIcon(QIcon(":/images/reader.ico"))
+        self.set_tray_icon_menu()
+
+    def set_tray_icon_menu(self):
+        menu = QMenu()
+        action = menu.addAction('退出')
+        action.triggered.connect(lambda: self.quit_app())
+        self.__tray_icon.setContextMenu(menu)
+
+        self.__tray_icon.activated.connect(self.handle_tray_icon_activated)
+
+    def handle_tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self.recover_window()
 
     def init_signals_and_slots(self):
         self.__window_style_changed.connect(self.refresh_window_style)

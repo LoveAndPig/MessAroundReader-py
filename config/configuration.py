@@ -1,5 +1,5 @@
-from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QColor, QFont
+from PySide6.QtCore import QPoint
+from PySide6.QtGui import QColor, QFont
 import json
 
 
@@ -26,7 +26,6 @@ class Configuration:
                 self.__windowPos = QPoint(window_pos_x, window_pos_y)
         except FileNotFoundError:
             print('未找到配置文件')
-
 
     def save_config(self):
         configs = {

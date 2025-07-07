@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/reader.ico</file>
+    </qresource>
+</RCC>
