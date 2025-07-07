@@ -96,7 +96,7 @@ class StyleDialog(QDialog):
         font_combo_box.setCurrentFont(config.get_font())
 
         def change_font(font):
-            config.set_font(font.family())
+            config.set_font(font)
             # config.save_config()
             if self.__contents_changed_callback:
                 self.__contents_changed_callback()
