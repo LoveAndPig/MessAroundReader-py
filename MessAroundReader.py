@@ -1,14 +1,15 @@
-from PySide6 import QtWidgets, QtCore, QtGui
+import typing
+
+from PySide6 import QtGui
+from PySide6.QtCore import Qt, QPoint, Signal, QSize
 from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
-from PySide6.QtCore import Qt, QPoint, Slot, Signal, QSize
 
-from file_readers.Resource import Resource, ResourceType
-from ui.StyleDialog import StyleDialog
 from config.configuration import config
-from file_readers.file_reader_factory import file_reader_factory
-import typing
 from constants import PressPurpose
+from file_readers.Resource import Resource, ResourceType
+from file_readers.file_reader_factory import file_reader_factory
+from ui.StyleDialog import StyleDialog
 
 
 class MessAroundReader(QMainWindow):
