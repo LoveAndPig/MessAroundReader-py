@@ -44,7 +44,7 @@ class StyleDialog(QDialog):
             if color.isValid():
                 bg_color_btn.setStyleSheet(f"background-color: {color.name()}")
                 config.set_bg_color(color)
-                config.save_config()
+                # config.save_config()
                 if self.__window_style_changed_callback:
                     self.__window_style_changed_callback()
                 self.exec()
@@ -70,7 +70,7 @@ class StyleDialog(QDialog):
             if color.isValid():
                 font_color_btn.setStyleSheet(f"background-color: {color.name()}")
                 config.set_font_color(color)
-                config.save_config()
+                # config.save_config()
                 if self.__contents_changed_callback:
                     self.__contents_changed_callback()
                 self.exec()
@@ -93,7 +93,7 @@ class StyleDialog(QDialog):
 
         def change_font(font):
             config.set_font(font.family())
-            config.save_config()
+            # config.save_config()
             if self.__contents_changed_callback:
                 self.__contents_changed_callback()
 

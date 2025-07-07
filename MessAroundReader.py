@@ -55,6 +55,7 @@ class MessAroundReader(QMainWindow):
     def mouseReleaseEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
         if a0.button() == Qt.MouseButton.LeftButton and self.__isLeftPressed:
             self.__isLeftPressed = False
+            config.set_window_pos(self.pos())
         elif a0.button() == Qt.MouseButton.RightButton and self.__isRightPressed:
             self.__isRightPressed = False
             self.show_context_menu(a0.globalPosition().toPoint())
