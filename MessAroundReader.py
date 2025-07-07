@@ -1,24 +1,26 @@
 from PySide6 import QtWidgets, QtCore, QtGui
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
-from PySide6.QtCore import Qt, QPoint, Slot, Signal
+from PySide6.QtCore import Qt, QPoint, Slot, Signal, QSize
 
 from file_readers.Resource import Resource, ResourceType
 from ui.StyleDialog import StyleDialog
 from config.configuration import config
 from file_readers.file_reader_factory import file_reader_factory
 import typing
+from constants import PressPurpose
 
 
 class MessAroundReader(QMainWindow):
     __window_style_changed = Signal()
     __contents_changed = Signal()
-    __isLeftPressed = False
-    __isRightPressed = False
-    __dragStart = QPoint(0, 0)
-    __windowDragStart = QPoint(0, 0)
     __isForcedToTop = False
     __index = 0
+    __resize_threshold = 10
+    __dragStart = QPoint(0, 0)
+    __windowDragStart = QPoint(0, 0)
+    __origin_size = QSize(0, 0)
+    __press_purpose = PressPurpose.NONE
 
     def __init__(self):
         super().__init__()
@@ -38,31 +40,54 @@ class MessAroundReader(QMainWindow):
         self.show()
         self.__tray_icon.show()
 
-    def mousePressEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
-        if a0.button() == QtCore.Qt.MouseButton.LeftButton:
-            self.__isLeftPressed = True
-            self.__dragStart = a0.globalPosition().toPoint()
+    def mousePressEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        self.update_press_purpose(event)
+        if self.__press_purpose == PressPurpose.MOVE:
+            self.__dragStart = event.globalPosition().toPoint()
             self.__windowDragStart = self.pos()
-        elif a0.button() == Qt.MouseButton.RightButton:
-            self.__isRightPressed = True
+        elif self.__press_purpose == PressPurpose.RESIZE:
+            self.__dragStart = event.globalPosition().toPoint()
+            self.__origin_size = self.size()
+            self.setCursor(Qt.CursorShape.SizeHorCursor)
 
-    def mouseMoveEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
-        if self.__isLeftPressed:
-            current_pos = a0.globalPosition().toPoint()
+    def mouseMoveEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        if self.__press_purpose == PressPurpose.MOVE:
+            current_pos = event.globalPosition().toPoint()
             current_win_pos = current_pos - self.__dragStart + self.__windowDragStart
             self.window().move(current_win_pos)
+        elif self.__press_purpose == PressPurpose.RESIZE:
+            current_pos = event.globalPosition().toPoint()
+            new_window_width = current_pos.x() - self.__dragStart.x() + self.__origin_size.width()
+            self.resize(new_window_width, self.size().height())
 
-    def mouseReleaseEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
-        if a0.button() == Qt.MouseButton.LeftButton and self.__isLeftPressed:
-            self.__isLeftPressed = False
+    def mouseReleaseEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        if self.__press_purpose == PressPurpose.MOVE:
             config.set_window_pos(self.pos())
-        elif a0.button() == Qt.MouseButton.RightButton and self.__isRightPressed:
-            self.__isRightPressed = False
-            self.show_context_menu(a0.globalPosition().toPoint())
+        elif self.__press_purpose == PressPurpose.RESIZE:
+            config.set_window_width(self.size().width())
+        elif self.__press_purpose == PressPurpose.CONTEXT_MENU:
+            self.show_context_menu(event.globalPosition().toPoint())
+        self.clear_press_purpose()
+        self.setCursor(Qt.CursorShape.ArrowCursor)
 
-    def mouseDoubleClickEvent(self, a0: typing.Optional[QtGui.QMouseEvent]) -> None:
-        if a0.button() == Qt.MouseButton.LeftButton:
+    def mouseDoubleClickEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.hide()
+
+    def update_press_purpose(self, event: typing.Optional[QtGui.QMouseEvent]):
+        if event is None:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
+            mouse_pos = event.pos()
+            if abs(mouse_pos.x() - self.size().width()) <= self.__resize_threshold:
+                self.__press_purpose = PressPurpose.RESIZE
+            else:
+                self.__press_purpose = PressPurpose.MOVE
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.__press_purpose = PressPurpose.CONTEXT_MENU
+
+    def clear_press_purpose(self):
+        self.__press_purpose = PressPurpose.NONE
 
     def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]):
         if self.__current_reader is None:
@@ -76,6 +101,13 @@ class MessAroundReader(QMainWindow):
             self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
 
         self.emit_contents_changed()
+
+    def keyPressEvent(self, event: QKeyEvent, /) -> None:
+        width = self.__content_label.width()
+        if event.key() == Qt.Key.Key_Left:
+            self.__content_label.move(max(self.__content_label.x() - 20, -(width - 40)), self.__content_label.y())
+        elif event.key() == Qt.Key.Key_Right:
+            self.__content_label.move(min(self.__content_label.x() + 20, 0), self.__content_label.y())
 
     def show_context_menu(self, pos):
         menu = QMenu()
@@ -117,6 +149,7 @@ class MessAroundReader(QMainWindow):
         self.__content_label.show()
 
     def refresh_content_label(self, resource: Resource):
+        self.__content_label.move(0, 0)
         self.__content_label.setText(resource.get_data())
         style_sheet = f"color: {config.get_font_color().name()}; "
         font = config.get_font()
@@ -125,7 +158,6 @@ class MessAroundReader(QMainWindow):
             font.setBold(True)
             style_sheet += "text-decoration: underline; "
         self.__content_label.setFont(font)
-        print(style_sheet)
         self.__content_label.setStyleSheet(style_sheet)
         # self.__content_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.__content_label.adjustSize()
@@ -161,12 +193,15 @@ class MessAroundReader(QMainWindow):
 
     def refresh_window_style(self):
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
-        self.show()
+        self.resize(self.size().width(), config.get_font_size() * 4 / 3 + 4)
+        # self.show()
 
     def init_window_style(self):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
-        self.resize(400, 20)
+        self.resize(config.get_window_width(), config.get_font_size() * 4 / 3 + 4)
+        # self.setFixedHeight(20)
         self.setMinimumWidth(200)
+        self.setMaximumWidth(800)
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
         self.move(config.get_window_pos())
 

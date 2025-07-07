@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QColorDialog, QFontComboBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QColorDialog, QFontComboBox, \
+    QSpinBox
 
 from config.configuration import config
 
@@ -28,6 +29,9 @@ class StyleDialog(QDialog):
 
         font_box = self.create_font_box()
         vbox.addLayout(font_box)
+
+        font_size_box = self.create_font_size_box()
+        vbox.addLayout(font_size_box)
 
     def create_bg_color_box(self):
         bg_color_box = QHBoxLayout(self)
@@ -102,3 +106,27 @@ class StyleDialog(QDialog):
         font_box.addWidget(font_combo_box)
 
         return font_box
+
+    def create_font_size_box(self):
+        font_size_box = QHBoxLayout(self)
+
+        font_size_label = QLabel('字  号', self)
+        font_size_label.show()
+        font_size_box.addWidget(font_size_label)
+
+        font_size_spin_box = QSpinBox(self)
+        font_size_spin_box.setRange(8, 40)
+        font_size_spin_box.setValue(config.get_font_size())
+
+        def change_font_size(size):
+            config.set_font_size(size)
+            if self.__window_style_changed_callback:
+                self.__window_style_changed_callback()
+            if self.__contents_changed_callback:
+                self.__contents_changed_callback()
+
+        font_size_spin_box.valueChanged.connect(lambda: change_font_size(font_size_spin_box.value()))
+        font_size_spin_box.show()
+        font_size_box.addWidget(font_size_spin_box)
+
+        return font_size_box

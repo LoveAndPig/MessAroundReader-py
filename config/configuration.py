@@ -10,6 +10,7 @@ class Configuration:
         self.__font = QFont('Arial')
         self.__fontSize = 12
         self.__windowPos = QPoint(400, 400)
+        self.__windowWidth = 400
 
         self.load_config()
 
@@ -24,6 +25,7 @@ class Configuration:
                 window_pos_x = configs.get('windowPosX', 400)
                 window_pos_y = configs.get('windowPosY', 400)
                 self.__windowPos = QPoint(window_pos_x, window_pos_y)
+                self.__windowWidth = configs.get('windowWidth', 400)
         except FileNotFoundError:
             print('未找到配置文件')
 
@@ -34,7 +36,8 @@ class Configuration:
             'font': self.__font.family(),
             'fontSize': self.__fontSize,
             'windowPosX': self.__windowPos.x(),
-            'windowPosY': self.__windowPos.y()
+            'windowPosY': self.__windowPos.y(),
+            'windowWidth': self.__windowWidth
         }
 
         with open('config.json', 'w') as f:
@@ -69,6 +72,12 @@ class Configuration:
 
     def set_window_pos(self, pos):
         self.__windowPos = pos
+
+    def set_window_width(self, width):
+        self.__windowWidth = width
+
+    def get_window_width(self):
+        return self.__windowWidth
 
 
 config = Configuration()
