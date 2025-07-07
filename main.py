@@ -5,7 +5,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from resources.resources import qInitResources
+from resources.resources_rc import qInitResources
 
 
 def set_application_icon(reader_app):
