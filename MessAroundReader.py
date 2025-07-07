@@ -6,7 +6,7 @@ from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
 
 from config.configuration import config
-from constants import PressPurpose
+from constants import PressPurpose, ReaderConstants
 from file_readers.Resource import Resource, ResourceType
 from file_readers.file_reader_factory import file_reader_factory
 from ui.StyleDialog import StyleDialog
@@ -91,24 +91,47 @@ class MessAroundReader(QMainWindow):
         self.__press_purpose = PressPurpose.NONE
 
     def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]):
-        if self.__current_reader is None:
-            return
-
-        lines = len(self.__current_reader.get_parsed_data())
-
         if a0.angleDelta().y() > 0:
-            self.__index = self.__index - 1 if self.__index > 0 else 0
+            self.decrease_index()
         else:
-            self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
-
-        self.emit_contents_changed()
+            self.increase_index()
 
     def keyPressEvent(self, event: QKeyEvent, /) -> None:
-        width = self.__content_label.width()
+        content_width = self.__content_label.width()
+        content_pos_x = self.__content_label.x()
+        # invisible_width = content_width - self.size().width() + ReaderConstants.CONTENT_SCROLL_RIGHT_MARGIN
+        invisible_width = content_width - self.size().width()
         if event.key() == Qt.Key.Key_Left:
-            self.__content_label.move(max(self.__content_label.x() - 20, -(width - 40)), self.__content_label.y())
+            if content_pos_x < 0:
+                self.__content_label.move(min(self.__content_label.x() + 10, 0), self.__content_label.y())
+            else:
+                pass
+                # 暂时放弃掉这个功能
+                # self.decrease_index()
         elif event.key() == Qt.Key.Key_Right:
-            self.__content_label.move(min(self.__content_label.x() + 20, 0), self.__content_label.y())
+            if invisible_width > 0 and content_pos_x > -invisible_width:
+                self.__content_label.move(content_pos_x - 3, self.__content_label.y())
+            else:
+                pass
+                # 暂时放弃掉这个功能
+                # self.increase_index()
+        elif event.key() == Qt.Key.Key_Up:
+            self.decrease_index()
+        elif event.key() == Qt.Key.Key_Down:
+            self.increase_index()
+
+    def increase_index(self):
+        if self.__current_reader is None:
+            return
+        lines = len(self.__current_reader.get_parsed_data())
+        self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
+        self.emit_contents_changed()
+
+    def decrease_index(self):
+        if self.__current_reader is None:
+            return
+        self.__index = self.__index - 1 if self.__index > 0 else 0
+        self.emit_contents_changed()
 
     def show_context_menu(self, pos):
         menu = QMenu()

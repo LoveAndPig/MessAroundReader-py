@@ -46,7 +46,8 @@ test_data = [
 
 
 class FileReader:
-    _parsed_data = []
+    def __init__(self):
+        self._parsed_data = []
 
     @abstractmethod
     def read_file(self, file_path):
