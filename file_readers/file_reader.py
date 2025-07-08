@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABC
 from file_readers.Resource import Resource, ResourceType
+from utils.regex import regex_util
 
 test_data = [
     # 基础测试
@@ -48,6 +49,7 @@ test_data = [
 class FileReader:
     def __init__(self):
         self._parsed_data = []
+        self._chapter_map = {}
 
     @abstractmethod
     def read_file(self, file_path):
@@ -56,7 +58,21 @@ class FileReader:
     def get_parsed_data(self) -> list[Resource]:
         return self._parsed_data
 
-    def get_test_data(self):
+    def get_chapter_map(self) -> dict:
+        return self._chapter_map
+
+    def add_chapter_index(self, chapter_name, index):
+        self._chapter_map[chapter_name] = index
+
+    def make_chapter_list(self):
+        self._chapter_map.clear()
+        for i, resource in enumerate(self._parsed_data):
+            if resource.type == ResourceType.TEXT:
+                if regex_util.is_string_match_regex(resource.get_data()):
+                    self.add_chapter_index(resource.get_data(), i)
+
+    @staticmethod
+    def get_test_data():
         test_resources = []
         for item in test_data:
             test_resources.append(Resource(item, ResourceType.TEXT))

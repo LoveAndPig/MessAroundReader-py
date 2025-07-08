@@ -6,29 +6,35 @@ from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
 
 from config.configuration import config
-from constants import PressPurpose, ReaderConstants
+from constants import PressPurpose
 from file_readers.Resource import Resource, ResourceType
 from file_readers.file_reader_factory import file_reader_factory
+from ui.ChapterDialog import ChapterDialog
 from ui.StyleDialog import StyleDialog
 
 
 class MessAroundReader(QMainWindow):
     __window_style_changed = Signal()
     __contents_changed = Signal()
-    __isForcedToTop = False
-    __index = 0
-    __resize_threshold = 10
-    __dragStart = QPoint(0, 0)
-    __windowDragStart = QPoint(0, 0)
-    __origin_size = QSize(0, 0)
-    __press_purpose = PressPurpose.NONE
 
     def __init__(self):
         super().__init__()
         self.__current_reader = None
+        self.__index = 0
+
+        self.__isForcedToTop = False
+        self.__resize_threshold = 10
+        self.__dragStart = QPoint(0, 0)
+        self.__windowDragStart = QPoint(0, 0)
+        self.__origin_size = QSize(0, 0)
+        self.__press_purpose = PressPurpose.NONE
         self.__content_label = QLabel(self)
+
         self.__styleDialog = StyleDialog()
         self.init_style_dialog()
+
+        self.__chapter_dialog = ChapterDialog()
+        self.init_chapter_dialog()
 
         self.__tray_icon = QSystemTrayIcon(self)
         self.set_reader_tray_icon()
@@ -137,6 +143,8 @@ class MessAroundReader(QMainWindow):
         menu = QMenu()
         self.show_file_select_menu(menu)
         self.show_force_to_top_menu(menu)
+        self.show_jump_to_chapter_menu(menu)
+        menu.addSeparator()
         self.show_style_edit_menu(menu)
         menu.addSeparator()
         self.show_exit_menu(menu)
@@ -153,6 +161,12 @@ class MessAroundReader(QMainWindow):
         else:
             action = menu.addAction('置顶')
         action.triggered.connect(lambda: self.force_to_top())
+
+    def show_jump_to_chapter_menu(self, menu):
+        if self.__current_reader is None:
+            return
+        action = menu.addAction('跳转到章节')
+        action.triggered.connect(lambda: self.show_chapter_dialog())
 
     def show_style_edit_menu(self, menu):
         action = menu.addAction('样式设置')
@@ -207,11 +221,16 @@ class MessAroundReader(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowStaysOnTopHint)
         self.show()
 
+    def show_chapter_dialog(self):
+        if self.__current_reader is not None:
+            self.__chapter_dialog.show_chapter_map(self.__current_reader.get_chapter_map())
+
     def recover_window(self):
         self.show()
         self.activateWindow()
 
     def quit_app(self):
+        self.__tray_icon.hide()
         QApplication.exit()
         config.save_config()
 
@@ -253,6 +272,13 @@ class MessAroundReader(QMainWindow):
         if self.__styleDialog is not None:
             self.__styleDialog.set_window_style_changed_callback(self.emit_window_style_changed)
             self.__styleDialog.set_contents_changed_callback(self.emit_contents_changed)
+
+    def init_chapter_dialog(self):
+        self.__chapter_dialog.set_jump_to_chapter_callback(self.jump_to_chapter)
+
+    def jump_to_chapter(self, index):
+        self.__index = index
+        self.emit_contents_changed()
 
     def emit_window_style_changed(self):
         self.__window_style_changed.emit()
