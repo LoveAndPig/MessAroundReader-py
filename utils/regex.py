@@ -2,7 +2,7 @@ import re
 
 
 class MyRegex:
-    default_regex = r"^第?\s*\d+\s*(?:章\s*节?|节|话|話|\s+)"
+    default_regex = r"^第?\s*(?:\d+|[零一二三四五六七八九十百千万]+)\s*(?:章\s*节?|节|话|話|\s+)"
 
     def __init__(self):
         self.__regexes = []
