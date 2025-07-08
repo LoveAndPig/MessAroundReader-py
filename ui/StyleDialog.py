@@ -33,6 +33,12 @@ class StyleDialog(QDialog):
         font_size_box = self.create_font_size_box()
         vbox.addLayout(font_size_box)
 
+        scroll_forward_speed_box = self.create_scroll_forward_speed_box()
+        vbox.addLayout(scroll_forward_speed_box)
+
+        scroll_backward_speed_box = self.create_scroll_backward_speed_box()
+        vbox.addLayout(scroll_backward_speed_box)
+
     def create_bg_color_box(self):
         bg_color_box = QHBoxLayout(self)
 
@@ -130,3 +136,39 @@ class StyleDialog(QDialog):
         font_size_box.addWidget(font_size_spin_box)
 
         return font_size_box
+
+    def create_scroll_forward_speed_box(self):
+        scroll_forward_speed_box = QHBoxLayout(self)
+
+        scroll_forward_speed_label = QLabel('左移速度', self)
+        scroll_forward_speed_label.show()
+        scroll_forward_speed_box.addWidget(scroll_forward_speed_label)
+
+        scroll_forward_speed_spin_box = QSpinBox(self)
+        scroll_forward_speed_spin_box.setRange(1, 40)
+        scroll_forward_speed_spin_box.setValue(config.get_scroll_forward_speed())
+        scroll_forward_speed_spin_box.valueChanged.connect(
+            lambda: config.set_scroll_forward_speed(scroll_forward_speed_spin_box.value()))
+
+        scroll_forward_speed_spin_box.show()
+        scroll_forward_speed_box.addWidget(scroll_forward_speed_spin_box)
+
+        return scroll_forward_speed_box
+
+    def create_scroll_backward_speed_box(self):
+        scroll_backward_speed_box = QHBoxLayout(self)
+
+        scroll_backward_speed_label = QLabel('右移速度', self)
+        scroll_backward_speed_label.show()
+        scroll_backward_speed_box.addWidget(scroll_backward_speed_label)
+
+        scroll_backward_speed_spin_box = QSpinBox(self)
+        scroll_backward_speed_spin_box.setRange(1, 40)
+        scroll_backward_speed_spin_box.setValue(config.get_scroll_backward_speed())
+        scroll_backward_speed_spin_box.valueChanged.connect(
+            lambda: config.set_scroll_backward_speed(scroll_backward_speed_spin_box.value()))
+
+        scroll_backward_speed_spin_box.show()
+        scroll_backward_speed_box.addWidget(scroll_backward_speed_spin_box)
+
+        return scroll_backward_speed_box

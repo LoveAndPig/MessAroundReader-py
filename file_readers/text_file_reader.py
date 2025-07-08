@@ -7,12 +7,11 @@ class TextFileReader(FileReader):
     def read_file(self, file_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                for i, line in enumerate(f.readlines()):
-                    self._parsed_data.append(Resource(ResourceType.TEXT, line))
-                    if regex_util.is_string_match_regex(line.strip()):
-                        self.add_chapter_index(line.strip(), i)
-                        print(line)
+                for line in f.readlines():
+                    if line.strip() != '':
+                        self._parsed_data.append(Resource(ResourceType.TEXT, line))
 
+            self.make_chapter_list()
             print(len(self.get_parsed_data()))
         except Exception as e:
             print(e)

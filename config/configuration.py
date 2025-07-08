@@ -11,6 +11,8 @@ class Configuration:
         self.__fontSize = 12
         self.__windowPos = QPoint(400, 400)
         self.__windowWidth = 400
+        self.__scroll_forward_speed = 10
+        self.__scroll_backward_speed = 5
 
         self.load_config()
 
@@ -26,6 +28,9 @@ class Configuration:
                 window_pos_y = configs.get('windowPosY', 400)
                 self.__windowPos = QPoint(window_pos_x, window_pos_y)
                 self.__windowWidth = configs.get('windowWidth', 400)
+                self.__scroll_forward_speed = configs.get('scrollForwardSpeed', 10)
+                self.__scroll_backward_speed = configs.get('scrollBackwardSpeed', 5)
+
         except FileNotFoundError:
             print('未找到配置文件')
 
@@ -37,7 +42,9 @@ class Configuration:
             'fontSize': self.__fontSize,
             'windowPosX': self.__windowPos.x(),
             'windowPosY': self.__windowPos.y(),
-            'windowWidth': self.__windowWidth
+            'windowWidth': self.__windowWidth,
+            'scrollForwardSpeed': self.__scroll_forward_speed,
+            'scrollBackwardSpeed': self.__scroll_backward_speed
         }
 
         with open('config.json', 'w') as f:
@@ -78,6 +85,18 @@ class Configuration:
 
     def get_window_width(self):
         return self.__windowWidth
+
+    def get_scroll_forward_speed(self):
+        return self.__scroll_forward_speed
+
+    def get_scroll_backward_speed(self):
+        return self.__scroll_backward_speed
+
+    def set_scroll_forward_speed(self, speed):
+        self.__scroll_forward_speed = speed
+
+    def set_scroll_backward_speed(self, speed):
+        self.__scroll_backward_speed = speed
 
 
 config = Configuration()
