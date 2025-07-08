@@ -1,17 +1,24 @@
+import ebooklib
+
 from file_readers.file_reader import FileReader
 from file_readers.Resource import ResourceType, Resource
 from ebooklib import epub
+import bs4
 
 
 class EPUBFileReader(FileReader):
     def read_file(self, file_path):
-        for data in super().get_test_data():
-            self._parsed_data.append(Resource(ResourceType.TEXT, data))
-
         book = epub.read_epub(file_path)
+        image_count = 0
         for item in book.get_items():
-            print('type: \n')
-            print(item.get_type())
-            print('name: \n')
-            print(item.get_name())
-            print(item.get_content())
+            if item.get_type() == ebooklib.ITEM_DOCUMENT:
+                soup = bs4.BeautifulSoup(item.get_content(), 'html.parser')
+                content = soup.get_text()
+                lines = content.split('\n')
+                for line in lines:
+                    if line.strip() != '':
+                        self._parsed_data.append(Resource(ResourceType.TEXT, line))
+            elif item.get_type() == ebooklib.ITEM_IMAGE:
+                self._parsed_data.append(Resource(ResourceType.IMAGE, item.get_content()))
+
+        self.make_chapter_list()

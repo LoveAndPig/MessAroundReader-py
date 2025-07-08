@@ -67,7 +67,7 @@ class FileReader:
     def make_chapter_list(self):
         self._chapter_map.clear()
         for i, resource in enumerate(self._parsed_data):
-            if resource.type == ResourceType.TEXT:
+            if resource.get_type() == ResourceType.TEXT:
                 if regex_util.is_string_match_regex(resource.get_data()):
                     self.add_chapter_index(resource.get_data(), i)
 
@@ -75,6 +75,6 @@ class FileReader:
     def get_test_data():
         test_resources = []
         for item in test_data:
-            test_resources.append(Resource(item, ResourceType.TEXT))
+            test_resources.append(Resource(ResourceType.TEXT, item))
 
         return test_resources

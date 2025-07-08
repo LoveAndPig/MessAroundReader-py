@@ -10,7 +10,9 @@ from constants import PressPurpose
 from file_readers.Resource import Resource, ResourceType
 from file_readers.file_reader_factory import file_reader_factory
 from ui.ChapterDialog import ChapterDialog
+from ui.ImageDialog import ImageDialog
 from ui.StyleDialog import StyleDialog
+from ui.ClickableLabel import ClickableLabel
 
 
 class MessAroundReader(QMainWindow):
@@ -28,13 +30,18 @@ class MessAroundReader(QMainWindow):
         self.__windowDragStart = QPoint(0, 0)
         self.__origin_size = QSize(0, 0)
         self.__press_purpose = PressPurpose.NONE
-        self.__content_label = QLabel(self)
+
+        self.__content_label = ClickableLabel(self)
+        self.init_content_label()
+        # self.__image_link_label = QLabel(self)
 
         self.__styleDialog = StyleDialog()
         self.init_style_dialog()
 
         self.__chapter_dialog = ChapterDialog()
         self.init_chapter_dialog()
+
+        self.__image_dialog = ImageDialog()
 
         self.__tray_icon = QSystemTrayIcon(self)
         self.set_reader_tray_icon()
@@ -179,26 +186,36 @@ class MessAroundReader(QMainWindow):
     def show_file_contents(self):
         if self.__current_reader is not None:
             parsed_data: list[Resource] = self.__current_reader.get_parsed_data()
-            self.refresh_content_label(parsed_data[self.__index])
+            if 0 <= self.__index < len(parsed_data):
+                self.refresh_content_label(parsed_data[self.__index])
         else:
             default_resource = Resource(ResourceType.TEXT, '选择一个文件')
             self.refresh_content_label(default_resource)
 
-        self.__content_label.show()
-
     def refresh_content_label(self, resource: Resource):
         self.__content_label.move(0, 0)
-        self.__content_label.setText(resource.get_data())
         style_sheet = f"color: {config.get_font_color().name()}; "
         font = config.get_font()
         font.setPointSize(config.get_font_size())
-        if resource.get_type() != ResourceType.TEXT:
+
+        if resource.get_type() == ResourceType.TEXT:
+            self.__content_label.setText(resource.get_data())
+            font.setBold(False)
+        elif resource.get_type() == ResourceType.IMAGE:
+            self.__content_label.setText("点击显示图片")
             font.setBold(True)
             style_sheet += "text-decoration: underline; "
+        elif resource.get_type() == ResourceType.LINK:
+            self.__content_label.setText(resource.get_data())
+            font.setItalic(True)
+            style_sheet += "text-decoration: underline; "
+
         self.__content_label.setFont(font)
         self.__content_label.setStyleSheet(style_sheet)
         # self.__content_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.__content_label.adjustSize()
+
+        self.__content_label.show()
 
     def select_file(self):
         file_name = QFileDialog.getOpenFileName(self,
@@ -224,6 +241,15 @@ class MessAroundReader(QMainWindow):
     def show_chapter_dialog(self):
         if self.__current_reader is not None:
             self.__chapter_dialog.show_chapter_map(self.__current_reader.get_chapter_map())
+
+    def show_external_resources(self):
+        if self.__current_reader is None:
+            return
+        resource = self.__current_reader.get_parsed_data()[self.__index]
+        if resource.get_type() == ResourceType.IMAGE:
+            self.__image_dialog.show_image(resource.get_data())
+        elif resource.get_type() == ResourceType.LINK:
+            pass
 
     def recover_window(self):
         self.show()
@@ -275,6 +301,9 @@ class MessAroundReader(QMainWindow):
 
     def init_chapter_dialog(self):
         self.__chapter_dialog.set_jump_to_chapter_callback(self.jump_to_chapter)
+
+    def init_content_label(self):
+        self.__content_label.clicked.connect(self.show_external_resources)
 
     def jump_to_chapter(self, index):
         self.__index = index
