@@ -197,26 +197,24 @@ class MessAroundReader(QMainWindow):
 
     def show_file_contents(self):
         if self.__current_reader is not None:
-            self.refresh_content_label(self.__current_reader.get_resource())
+            self.refresh_content_label(self.__current_reader.get_text(), self.__current_reader.get_type())
         else:
-            default_resource = Resource(ResourceType.TEXT, '选择一个文件')
-            self.refresh_content_label(default_resource)
+            self.refresh_content_label('选择一个文件', ResourceType.TEXT)
 
-    def refresh_content_label(self, resource: Resource):
+    def refresh_content_label(self, text: str, resource_type: ResourceType):
         self.__content_label.move(0, 0)
         style_sheet = f"color: {config.get_font_color().name()}; "
         font = config.get_font()
         font.setPointSize(config.get_font_size())
+        self.__content_label.setText(text)
 
-        if resource.get_type() == ResourceType.TEXT:
-            self.__content_label.setText(resource.get_data())
+        if resource_type == ResourceType.TEXT:
             font.setBold(False)
-        elif resource.get_type() == ResourceType.IMAGE:
+        elif resource_type == ResourceType.IMAGE:
             self.__content_label.setText("点击显示图片")
             font.setBold(True)
             style_sheet += "text-decoration: underline; "
-        elif resource.get_type() == ResourceType.LINK:
-            self.__content_label.setText(resource.get_data())
+        elif resource_type == ResourceType.LINK:
             font.setItalic(True)
             style_sheet += "text-decoration: underline; "
 

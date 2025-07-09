@@ -97,6 +97,12 @@ class FileReader:
     def get_resource(self) -> Resource:
         return self.__scroller.get_resource()
 
+    def get_text(self) -> str:
+        return self.__scroller.get_text()
+
+    def get_type(self) -> ResourceType:
+        return self.__scroller.get_type()
+
     def get_file_path(self):
         return self.__file_path
 

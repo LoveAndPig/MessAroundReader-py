@@ -29,6 +29,22 @@ class ReaderScroller:
 
         return Resource(ResourceType.INVALID, "无效资源")
 
+    def get_text(self) -> str:
+        if self.__reader is None:
+            return ""
+        current_resource = self.get_resource()
+        if current_resource.get_type() == ResourceType.TEXT:
+            return current_resource.get_data()
+        elif current_resource.get_type() == ResourceType.IMAGE:
+            return "点击显示图片"
+        elif current_resource.get_type() == ResourceType.LINK:
+            return current_resource.get_data()
+        else:
+            return "无效资源"
+
+    def get_type(self) -> ResourceType:
+        return self.get_resource().get_type()
+
     def get_index(self) -> int:
         return self.__index
 
@@ -39,4 +55,3 @@ class ReaderScroller:
 
     def update_history(self):
         history.update_history(self.__reader.get_file_path(), self.__index)
-

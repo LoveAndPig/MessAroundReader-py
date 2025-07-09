@@ -18,7 +18,7 @@ class History:
 
     def update_history(self, file_path, index):
         self.__history[file_path] = index
-        print("""update history : ?, ?""", file_path, index)
+        print(f"save history: {file_path}, {index}")
 
     def load_history(self):
         self.__cursor.execute("""SELECT file_path, file_index FROM history""")
