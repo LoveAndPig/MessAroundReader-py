@@ -8,8 +8,7 @@ class History:
         self.__connection = sqlite3.connect("history.db")
         self.__cursor = self.__connection.cursor()
         self.__cursor.execute("""CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_path TEXT NOT NULL UNIQUE,
+            file_path TEXT PRIMARY KEY,
             file_index INTEGER NOT NULL
         )""")
         self.__connection.commit()
