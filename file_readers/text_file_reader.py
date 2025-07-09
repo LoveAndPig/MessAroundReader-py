@@ -8,8 +8,9 @@ class TextFileReader(FileReader):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line in f.readlines():
-                    if line.strip() != '':
-                        self._parsed_data.append(Resource(ResourceType.TEXT, line))
+                    strip_line = line.strip()
+                    if strip_line != '':
+                        self._parsed_data.append(Resource(ResourceType.TEXT, strip_line))
 
             self.make_chapter_list()
             print(len(self.get_parsed_data()))

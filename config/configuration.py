@@ -13,6 +13,7 @@ class Configuration:
         self.__windowWidth = 400
         self.__scroll_forward_speed = 10
         self.__scroll_backward_speed = 5
+        self.__last_opened_file = ""
 
         self.load_config()
 
@@ -30,6 +31,7 @@ class Configuration:
                 self.__windowWidth = configs.get('windowWidth', 400)
                 self.__scroll_forward_speed = configs.get('scrollForwardSpeed', 10)
                 self.__scroll_backward_speed = configs.get('scrollBackwardSpeed', 5)
+                self.__last_opened_file = configs.get('lastOpenedFile', '')
 
         except FileNotFoundError:
             print('未找到配置文件')
@@ -44,7 +46,8 @@ class Configuration:
             'windowPosY': self.__windowPos.y(),
             'windowWidth': self.__windowWidth,
             'scrollForwardSpeed': self.__scroll_forward_speed,
-            'scrollBackwardSpeed': self.__scroll_backward_speed
+            'scrollBackwardSpeed': self.__scroll_backward_speed,
+            'lastOpenedFile': self.__last_opened_file
         }
 
         with open('config.json', 'w') as f:
@@ -97,6 +100,12 @@ class Configuration:
 
     def set_scroll_backward_speed(self, speed):
         self.__scroll_backward_speed = speed
+
+    def get_last_opened_file(self):
+        return self.__last_opened_file
+
+    def set_last_opened_file(self, file_path):
+        self.__last_opened_file = file_path
 
 
 config = Configuration()

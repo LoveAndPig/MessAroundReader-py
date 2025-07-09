@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QDialog, QListView, QVBoxLayout
 class ChapterDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setWindowTitle("章节列表")
         self.__chapters_view = QListView()
         self.__model = QStandardItemModel()  # 初始化模型
         self.__chapters_view.setModel(self.__model)

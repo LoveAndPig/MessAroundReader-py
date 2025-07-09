@@ -6,10 +6,12 @@ from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLabel, QSystemTrayIcon
 
 from config.configuration import config
+from history.history import history
 from constants import PressPurpose
 from file_readers.Resource import Resource, ResourceType
 from file_readers.file_reader_factory import file_reader_factory
 from ui.ChapterDialog import ChapterDialog
+from ui.HistoryDialog import HistoryDialog
 from ui.ImageDialog import ImageDialog
 from ui.StyleDialog import StyleDialog
 from ui.ClickableLabel import ClickableLabel
@@ -22,7 +24,6 @@ class MessAroundReader(QMainWindow):
     def __init__(self):
         super().__init__()
         self.__current_reader = None
-        self.__index = 0
 
         self.__isForcedToTop = False
         self.__resize_threshold = 10
@@ -33,13 +34,15 @@ class MessAroundReader(QMainWindow):
 
         self.__content_label = ClickableLabel(self)
         self.init_content_label()
-        # self.__image_link_label = QLabel(self)
 
         self.__styleDialog = StyleDialog()
         self.init_style_dialog()
 
         self.__chapter_dialog = ChapterDialog()
         self.init_chapter_dialog()
+
+        self.__history_dialog = HistoryDialog()
+        self.init_history_dialog()
 
         self.__image_dialog = ImageDialog()
 
@@ -49,6 +52,8 @@ class MessAroundReader(QMainWindow):
         self.init_window_style()
         self.init_signals_and_slots()
         self.show_file_contents()
+
+        self.recover_last_opened_file()
 
     def mess_around_show(self):
         self.show()
@@ -138,14 +143,13 @@ class MessAroundReader(QMainWindow):
     def increase_index(self):
         if self.__current_reader is None:
             return
-        lines = len(self.__current_reader.get_parsed_data())
-        self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
+        self.__current_reader.scroll_to_next()
         self.emit_contents_changed()
 
     def decrease_index(self):
         if self.__current_reader is None:
             return
-        self.__index = self.__index - 1 if self.__index > 0 else 0
+        self.__current_reader.scroll_to_previous()
         self.emit_contents_changed()
 
     def show_context_menu(self, pos):
@@ -160,8 +164,11 @@ class MessAroundReader(QMainWindow):
         menu.exec(pos)
 
     def show_file_select_menu(self, menu):
-        action = menu.addAction('选择文件')
-        action.triggered.connect(lambda: self.select_file())
+        open_menu = menu.addMenu('打开')
+        select_action = open_menu.addAction('选择文件')
+        select_action.triggered.connect(lambda: self.select_file())
+        history_action = open_menu.addAction('历史记录')
+        history_action.triggered.connect(lambda: self.__history_dialog.show_history())
 
     def show_force_to_top_menu(self, menu):
         # action = None
@@ -174,8 +181,11 @@ class MessAroundReader(QMainWindow):
     def show_jump_to_chapter_menu(self, menu):
         if self.__current_reader is None:
             return
-        action = menu.addAction('跳转到章节')
-        action.triggered.connect(lambda: self.show_chapter_dialog())
+        jump_menu = menu.addMenu('跳转到章节')
+        jump_to_start_action = jump_menu.addAction('跳至开头')
+        jump_to_start_action.triggered.connect(lambda: self.jump_to_index(0))
+        jump_to_chapter_action = jump_menu.addAction('章节列表')
+        jump_to_chapter_action.triggered.connect(lambda: self.show_chapter_dialog())
 
     def show_style_edit_menu(self, menu):
         action = menu.addAction('样式设置')
@@ -187,9 +197,7 @@ class MessAroundReader(QMainWindow):
 
     def show_file_contents(self):
         if self.__current_reader is not None:
-            parsed_data: list[Resource] = self.__current_reader.get_parsed_data()
-            if 0 <= self.__index < len(parsed_data):
-                self.refresh_content_label(parsed_data[self.__index])
+            self.refresh_content_label(self.__current_reader.get_resource())
         else:
             default_resource = Resource(ResourceType.TEXT, '选择一个文件')
             self.refresh_content_label(default_resource)
@@ -220,17 +228,13 @@ class MessAroundReader(QMainWindow):
         self.__content_label.show()
 
     def select_file(self):
-        file_name = QFileDialog.getOpenFileName(self,
-                                                '选择文件',
-                                                'D:/',
-                                                '电子书 (*.txt *.epub *.mobi);;')
-        if len(file_name) != 0:
-            print(file_name[0])
-            self.__current_reader = file_reader_factory.get_file_reader(file_name[0])
-            if self.__current_reader is not None:
-                self.__current_reader.read_file(file_name[0])
-                self.__index = 0
-                self.emit_contents_changed()
+        file_name_tuple = QFileDialog.getOpenFileName(self,
+                                                      '选择文件',
+                                                      'D:/',
+                                                      '电子书 (*.txt *.epub *.mobi);;')
+
+        file_name = file_name_tuple[0]
+        self.load_file_from_path(file_name)
 
     def force_to_top(self):
         self.__isForcedToTop = not self.__isForcedToTop
@@ -247,7 +251,7 @@ class MessAroundReader(QMainWindow):
     def show_external_resources(self):
         if self.__current_reader is None:
             return
-        resource = self.__current_reader.get_parsed_data()[self.__index]
+        resource = self.__current_reader.get_resource()
         if resource.get_type() == ResourceType.IMAGE:
             self.__image_dialog.show_image(resource.get_data())
         elif resource.get_type() == ResourceType.LINK:
@@ -258,9 +262,39 @@ class MessAroundReader(QMainWindow):
         self.activateWindow()
 
     def quit_app(self):
-        self.__tray_icon.hide()
         QApplication.exit()
         config.save_config()
+        self.save_history()
+
+    def recover_last_opened_file(self):
+        last_opened_file = config.get_last_opened_file()
+        if last_opened_file != "":
+            self.recover_from_history(last_opened_file)
+
+    def recover_from_history(self, file_path):
+        self.load_file_from_path(file_path, True)
+
+    def load_file_from_path(self, file_path, load_history=False):
+        if file_path != "":
+            self.update_history(file_path)
+            config.set_last_opened_file(file_path)
+            self.__current_reader = file_reader_factory.get_file_reader(file_path)
+            if self.__current_reader is not None:
+                self.__current_reader.parse_file(file_path)
+                if load_history:
+                    self.__current_reader.jump_to_index(history.get_index(file_path))
+                self.emit_contents_changed()
+
+    def update_history(self, file_path):
+        if self.__current_reader is None:
+            return
+        current_file_path = self.__current_reader.get_file_path()
+        if file_path != current_file_path:
+            history.update_history(self.__current_reader.get_file_path(), self.__current_reader.get_index())
+
+    def save_history(self):
+        history.update_history(self.__current_reader.get_file_path(), self.__current_reader.get_index())
+        history.save_history()
 
     def refresh_window_style(self):
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
@@ -302,14 +336,18 @@ class MessAroundReader(QMainWindow):
             self.__styleDialog.set_contents_changed_callback(self.emit_contents_changed)
 
     def init_chapter_dialog(self):
-        self.__chapter_dialog.set_jump_to_chapter_callback(self.jump_to_chapter)
+        self.__chapter_dialog.set_jump_to_chapter_callback(self.jump_to_index)
+
+    def init_history_dialog(self):
+        self.__history_dialog.set_recover_from_history_callback(self.recover_from_history)
 
     def init_content_label(self):
         self.__content_label.clicked.connect(self.show_external_resources)
 
-    def jump_to_chapter(self, index):
-        self.__index = index
+    def jump_to_index(self, index):
+        self.__current_reader.jump_to_index(index)
         self.emit_contents_changed()
+        self.__chapter_dialog.hide()
 
     def emit_window_style_changed(self):
         self.__window_style_changed.emit()

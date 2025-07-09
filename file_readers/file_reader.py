@@ -1,6 +1,7 @@
 from abc import abstractmethod, ABC
 from file_readers.Resource import Resource, ResourceType
 from utils.regex import regex_util
+from file_readers.reader_scroller import ReaderScroller
 
 test_data = [
     # 基础测试
@@ -51,6 +52,16 @@ class FileReader:
         self._parsed_data = []
         self._chapter_map = {}
 
+        self.__file_path = ""
+        self.__scroller = ReaderScroller(self)
+        self.__is_initialized = False
+
+    def parse_file(self, file_path):
+        if not self.__is_initialized:
+            self.__file_path = file_path
+            self.read_file(file_path)
+            self.__is_initialized = True
+
     @abstractmethod
     def read_file(self, file_path):
         pass
@@ -70,6 +81,27 @@ class FileReader:
             if resource.get_type() == ResourceType.TEXT:
                 if regex_util.is_string_match_regex(resource.get_data()):
                     self.add_chapter_index(resource.get_data(), i)
+
+    def scroll_to_next(self):
+        self.__scroller.scroll_to_next()
+
+    def scroll_to_previous(self):
+        self.__scroller.scroll_to_previous()
+
+    def get_index(self) -> int:
+        return self.__scroller.get_index()
+
+    def jump_to_index(self, index):
+        self.__scroller.jump_to_index(index)
+
+    def get_resource(self) -> Resource:
+        return self.__scroller.get_resource()
+
+    def get_file_path(self):
+        return self.__file_path
+
+    def update_history(self):
+        self.__scroller.update_history()
 
     @staticmethod
     def get_test_data():
