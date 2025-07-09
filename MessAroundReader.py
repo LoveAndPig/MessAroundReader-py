@@ -229,7 +229,7 @@ class MessAroundReader(QMainWindow):
         file_name_tuple = QFileDialog.getOpenFileName(self,
                                                       '选择文件',
                                                       'D:/',
-                                                      '电子书 (*.txt *.epub *.mobi);;')
+                                                      '电子书 (*.txt *.epub *.docx);;')
 
         file_name = file_name_tuple[0]
         self.load_file_from_path(file_name)
@@ -271,6 +271,7 @@ class MessAroundReader(QMainWindow):
 
     def recover_from_history(self, file_path):
         self.load_file_from_path(file_path, True)
+        self.__history_dialog.hide()
 
     def load_file_from_path(self, file_path, load_history=False):
         if file_path != "":
@@ -293,6 +294,11 @@ class MessAroundReader(QMainWindow):
     def save_history(self):
         history.update_history(self.__current_reader.get_file_path(), self.__current_reader.get_index())
         history.save_history()
+
+    def jump_to_index(self, index):
+        self.__current_reader.jump_to_index(index)
+        self.emit_contents_changed()
+        self.__chapter_dialog.hide()
 
     def refresh_window_style(self):
         self.setStyleSheet(f"background-color: {config.get_bg_color().name()}")
@@ -341,11 +347,6 @@ class MessAroundReader(QMainWindow):
 
     def init_content_label(self):
         self.__content_label.clicked.connect(self.show_external_resources)
-
-    def jump_to_index(self, index):
-        self.__current_reader.jump_to_index(index)
-        self.emit_contents_changed()
-        self.__chapter_dialog.hide()
 
     def emit_window_style_changed(self):
         self.__window_style_changed.emit()

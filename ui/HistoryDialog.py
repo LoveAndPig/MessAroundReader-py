@@ -26,6 +26,7 @@ class HistoryDialog(QDialog):
         for file_path, index in history.get_history().items():
             file_name = os.path.basename(file_path)
             item = QStandardItem(f"{index} --- {file_name}")
+            item.setEditable(False)
             item.setData((file_path, index))
             self.__model.appendRow(item)
 
