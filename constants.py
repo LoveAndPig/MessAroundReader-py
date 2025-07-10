@@ -10,3 +10,5 @@ class PressPurpose(Enum):
 
 class ReaderConstants:
     CONTENT_SCROLL_RIGHT_MARGIN = 150
+    LONG_SCROLL_BRAKE = 6
+    SHORT_SCROLL_BRAKE = 2

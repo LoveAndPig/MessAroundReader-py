@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushBu
 from config.configuration import config
 
 
-class StyleDialog(QDialog):
+class ConfigDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -38,6 +38,9 @@ class StyleDialog(QDialog):
 
         scroll_backward_speed_box = self.create_scroll_backward_speed_box()
         vbox.addLayout(scroll_backward_speed_box)
+
+        scroll_disable_gap_box = self.create_scroll_disable_gap_box()
+        vbox.addLayout(scroll_disable_gap_box)
 
     def create_bg_color_box(self):
         bg_color_box = QHBoxLayout(self)
@@ -172,3 +175,22 @@ class StyleDialog(QDialog):
         scroll_backward_speed_box.addWidget(scroll_backward_speed_spin_box)
 
         return scroll_backward_speed_box
+
+    def create_scroll_disable_gap_box(self):
+        scroll_disable_gap_box = QHBoxLayout(self)
+
+        scroll_disable_gap_label = QLabel('滚动间隔', self)
+        scroll_disable_gap_label.show()
+        scroll_disable_gap_box.addWidget(scroll_disable_gap_label)
+
+        scroll_disable_gap_spin_box = QSpinBox(self)
+        scroll_disable_gap_spin_box.setRange(100, 5000)
+        scroll_disable_gap_spin_box.setSingleStep(100)
+        scroll_disable_gap_spin_box.setValue(config.get_scroll_disable_gap())
+        scroll_disable_gap_spin_box.valueChanged.connect(
+            lambda: config.set_scroll_disable_gap(scroll_disable_gap_spin_box.value()))
+
+        scroll_disable_gap_spin_box.show()
+        scroll_disable_gap_box.addWidget(scroll_disable_gap_spin_box)
+
+        return scroll_disable_gap_box

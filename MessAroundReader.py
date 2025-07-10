@@ -1,4 +1,5 @@
 import typing
+import time
 
 from PySide6 import QtGui
 from PySide6.QtCore import Qt, QPoint, Signal, QSize
@@ -7,13 +8,13 @@ from PySide6.QtWidgets import QMainWindow, QMenu, QFileDialog, QApplication, QLa
 
 from config.configuration import config
 from history.history import history
-from constants import PressPurpose
+from constants import PressPurpose, ReaderConstants
 from file_readers.Resource import Resource, ResourceType
 from file_readers.file_reader_factory import file_reader_factory
 from ui.ChapterDialog import ChapterDialog
 from ui.HistoryDialog import HistoryDialog
 from ui.ImageDialog import ImageDialog
-from ui.StyleDialog import StyleDialog
+from ui.ConfigDialog import ConfigDialog
 from ui.ClickableLabel import ClickableLabel
 
 
@@ -31,12 +32,14 @@ class MessAroundReader(QMainWindow):
         self.__windowDragStart = QPoint(0, 0)
         self.__origin_size = QSize(0, 0)
         self.__press_purpose = PressPurpose.NONE
+        self.__scroll_activated_time = time.perf_counter()
+        self.__is_reach_side = False
 
         self.__content_label = ClickableLabel(self)
         self.init_content_label()
 
-        self.__styleDialog = StyleDialog()
-        self.init_style_dialog()
+        self.__configDialog = ConfigDialog()
+        self.init_config_dialog()
 
         self.__chapter_dialog = ChapterDialog()
         self.init_chapter_dialog()
@@ -110,9 +113,11 @@ class MessAroundReader(QMainWindow):
 
     def wheelEvent(self, a0: typing.Optional[QtGui.QWheelEvent]):
         if a0.angleDelta().y() > 0:
-            self.decrease_index()
+            # self.decrease_index()
+            self.go_backward()
         else:
-            self.increase_index()
+            # self.increase_index()
+            self.go_forward()
 
     def keyPressEvent(self, event: QKeyEvent, /) -> None:
         content_width = self.__content_label.width()
@@ -140,17 +145,69 @@ class MessAroundReader(QMainWindow):
         elif event.key() == Qt.Key.Key_Down:
             self.increase_index()
 
+    def go_forward(self):
+        content_width = self.__content_label.width()
+        content_pos_x = self.__content_label.x()
+        invisible_width = content_width - self.size().width()
+        # if invisible_width > 0 and content_pos_x > -(invisible_width + ReaderConstants.CONTENT_SCROLL_RIGHT_MARGIN):
+        if invisible_width > 0:
+            if content_pos_x > -invisible_width:
+                self.update_reach_side(False)
+                self.__content_label.move(
+                    content_pos_x - config.get_scroll_forward_speed(), self.__content_label.y())
+            else:
+                self.increase_index_with_gap()
+        else:
+            # self.increase_index()
+            self.increase_index_with_gap()
+
+    def go_backward(self):
+        content_width = self.__content_label.width()
+        content_pos_x = self.__content_label.x()
+        invisible_width = content_width - self.size().width()
+        if invisible_width > 0:
+            if content_pos_x < 0:
+                self.update_reach_side(False)
+                self.__content_label.move(
+                    min(self.__content_label.x() + config.get_scroll_backward_speed(), 0), self.__content_label.y())
+            else:
+                self.decrease_index_with_gap()
+        else:
+            self.decrease_index_with_gap()
+            # self.decrease_index_with_brake(ReaderConstants.SHORT_SCROLL_BRAKE)
+
+    def increase_index_with_gap(self):
+        self.update_reach_side(True)
+        if self.is_scroll_available():
+            self.increase_index()
+
+    def decrease_index_with_gap(self):
+        self.update_reach_side(True)
+        if self.is_scroll_available():
+            self.decrease_index()
+
     def increase_index(self):
         if self.__current_reader is None:
             return
+        self.__scroll_activated_time = time.perf_counter()
         self.__current_reader.scroll_to_next()
         self.emit_contents_changed()
 
     def decrease_index(self):
         if self.__current_reader is None:
             return
+        self.__scroll_activated_time = time.perf_counter()
         self.__current_reader.scroll_to_previous()
         self.emit_contents_changed()
+
+    def update_reach_side(self, reach):
+        if self.__is_reach_side != reach:
+            self.__scroll_activated_time = time.perf_counter()
+        self.__is_reach_side = reach
+
+    def is_scroll_available(self):
+        gap = time.perf_counter() - self.__scroll_activated_time
+        return gap * 1000 > config.get_scroll_disable_gap()
 
     def show_context_menu(self, pos):
         menu = QMenu()
@@ -188,8 +245,8 @@ class MessAroundReader(QMainWindow):
         jump_to_chapter_action.triggered.connect(lambda: self.show_chapter_dialog())
 
     def show_style_edit_menu(self, menu):
-        action = menu.addAction('样式设置')
-        action.triggered.connect(lambda: self.__styleDialog.exec())
+        action = menu.addAction('设置')
+        action.triggered.connect(lambda: self.__configDialog.exec())
 
     def show_exit_menu(self, menu):
         action = menu.addAction('退出')
@@ -334,10 +391,10 @@ class MessAroundReader(QMainWindow):
         self.__window_style_changed.connect(self.refresh_window_style)
         self.__contents_changed.connect(self.show_file_contents)
 
-    def init_style_dialog(self):
-        if self.__styleDialog is not None:
-            self.__styleDialog.set_window_style_changed_callback(self.emit_window_style_changed)
-            self.__styleDialog.set_contents_changed_callback(self.emit_contents_changed)
+    def init_config_dialog(self):
+        if self.__configDialog is not None:
+            self.__configDialog.set_window_style_changed_callback(self.emit_window_style_changed)
+            self.__configDialog.set_contents_changed_callback(self.emit_contents_changed)
 
     def init_chapter_dialog(self):
         self.__chapter_dialog.set_jump_to_chapter_callback(self.jump_to_index)
