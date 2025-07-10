@@ -1,5 +1,8 @@
+import time
+
 from file_readers.Resource import ResourceType, Resource
 from history.history import history
+from config.configuration import config
 
 
 class ReaderScroller:
@@ -8,18 +11,43 @@ class ReaderScroller:
         self.__index = 0
         self.__inner_index = 0
 
-    def scroll_to_next(self):
-        if self.__reader is None:
-            return
-        lines = len(self.__reader.get_parsed_data())
-        self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
-        # self.update_history()
+        self.__is_reach_side = False
+        self.__reach_side_time = time.perf_counter()
 
-    def scroll_to_previous(self):
+    def scroll_to_next(self) -> bool:
         if self.__reader is None:
-            return
-        self.__index = self.__index - 1 if self.__index > 0 else 0
-        # self.update_history()
+            return False
+        self.update_reach_side(True)
+        lines = len(self.__reader.get_parsed_data())
+        # self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
+        if self.is_scroll_available() and self.__index < lines - 1:
+            self.__index += 1
+            return True
+
+        return False
+
+    def scroll_to_previous(self) -> bool:
+        if self.__reader is None:
+            return False
+        self.update_reach_side(True)
+        # self.__index = self.__index - 1 if self.__index > 0 else 0
+        if self.is_scroll_available() and self.__index > 0:
+            self.__index -= 1
+            return True
+
+        return False
+
+    def update_reach_side(self, reach):
+        if reach != self.__is_reach_side:
+            self.__reach_side_time = time.perf_counter()
+        self.__is_reach_side = reach
+
+    def is_scroll_available(self) -> bool:
+        if self.__reader is None:
+            return False
+        gap = time.perf_counter() - self.__reach_side_time
+        print(gap)
+        return gap * 1000 > config.get_scroll_disable_gap()
 
     def get_resource(self) -> Resource:
         if self.__reader is None:

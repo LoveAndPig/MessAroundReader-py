@@ -82,11 +82,11 @@ class FileReader:
                 if regex_util.is_string_match_regex(resource.get_data()):
                     self.add_chapter_index(resource.get_data(), i)
 
-    def scroll_to_next(self):
-        self.__scroller.scroll_to_next()
+    def scroll_to_next(self) -> bool:
+        return self.__scroller.scroll_to_next()
 
-    def scroll_to_previous(self):
-        self.__scroller.scroll_to_previous()
+    def scroll_to_previous(self) -> bool:
+        return self.__scroller.scroll_to_previous()
 
     def get_index(self) -> int:
         return self.__scroller.get_index()
@@ -108,6 +108,9 @@ class FileReader:
 
     def update_history(self):
         self.__scroller.update_history()
+
+    def update_reach_side(self, reach):
+        self.__scroller.update_reach_side(reach)
 
     @staticmethod
     def get_test_data():

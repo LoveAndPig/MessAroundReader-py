@@ -17,22 +17,17 @@ class History:
 
     def update_history(self, file_path, index):
         self.__history[file_path] = index
-        print(f"save history: {file_path}, {index}")
 
     def load_history(self):
         self.__cursor.execute("""SELECT file_path, file_index FROM history""")
         data = self.__cursor.fetchall()
-        print("load history")
         for file_path, index in data:
             self.__history[file_path] = index
-            print(file_path, index)
 
     def save_history(self):
         data = []
-        print("save history")
         for file_path, index in self.__history.items():
             data.append((file_path, index))
-            print(file_path, index)
         self.__cursor.executemany(
             """INSERT OR REPLACE INTO history (file_path, file_index) VALUES (?, ?)""",
             data
