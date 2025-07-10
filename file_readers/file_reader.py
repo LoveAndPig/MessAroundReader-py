@@ -88,6 +88,9 @@ class FileReader:
     def scroll_to_previous(self) -> bool:
         return self.__scroller.scroll_to_previous()
 
+    def is_scroll_after_new_available(self) -> bool:
+        return self.__scroller.is_scroll_after_new_available()
+
     def get_index(self) -> int:
         return self.__scroller.get_index()
 

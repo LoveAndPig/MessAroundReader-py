@@ -39,8 +39,11 @@ class ConfigDialog(QDialog):
         scroll_backward_speed_box = self.create_scroll_backward_speed_box()
         vbox.addLayout(scroll_backward_speed_box)
 
-        scroll_disable_gap_box = self.create_scroll_disable_gap_box()
-        vbox.addLayout(scroll_disable_gap_box)
+        scroll_to_new_disable_gap_box = self.create_scroll_to_new_disable_gap_box()
+        vbox.addLayout(scroll_to_new_disable_gap_box)
+
+        scroll_after_new_disable_gap_box = self.create_scroll_after_new_disable_gap_box()
+        vbox.addLayout(scroll_after_new_disable_gap_box)
 
     def create_bg_color_box(self):
         bg_color_box = QHBoxLayout(self)
@@ -176,21 +179,42 @@ class ConfigDialog(QDialog):
 
         return scroll_backward_speed_box
 
-    def create_scroll_disable_gap_box(self):
+    def create_scroll_to_new_disable_gap_box(self):
         scroll_disable_gap_box = QHBoxLayout(self)
 
-        scroll_disable_gap_label = QLabel('滚动间隔', self)
+        scroll_disable_gap_label = QLabel('换行时间隔', self)
         scroll_disable_gap_label.show()
         scroll_disable_gap_box.addWidget(scroll_disable_gap_label)
 
         scroll_disable_gap_spin_box = QSpinBox(self)
         scroll_disable_gap_spin_box.setRange(100, 5000)
         scroll_disable_gap_spin_box.setSingleStep(100)
-        scroll_disable_gap_spin_box.setValue(config.get_scroll_disable_gap())
+        scroll_disable_gap_spin_box.setValue(config.get_scroll_to_new_disable_gap())
         scroll_disable_gap_spin_box.valueChanged.connect(
-            lambda: config.set_scroll_disable_gap(scroll_disable_gap_spin_box.value()))
+            lambda: config.set_scroll_to_new_disable_gap(scroll_disable_gap_spin_box.value()))
 
         scroll_disable_gap_spin_box.show()
         scroll_disable_gap_box.addWidget(scroll_disable_gap_spin_box)
 
         return scroll_disable_gap_box
+
+    def create_scroll_after_new_disable_gap_box(self):
+        scroll_disable_gap_box = QHBoxLayout(self)
+
+        scroll_disable_gap_label = QLabel('换行后间隔', self)
+        scroll_disable_gap_label.show()
+        scroll_disable_gap_box.addWidget(scroll_disable_gap_label)
+
+        scroll_disable_gap_spin_box = QSpinBox(self)
+        scroll_disable_gap_spin_box.setRange(100, 5000)
+        scroll_disable_gap_spin_box.setSingleStep(100)
+        scroll_disable_gap_spin_box.setValue(config.get_scroll_after_new_disable_gap())
+        scroll_disable_gap_spin_box.valueChanged.connect(
+            lambda: config.set_scroll_after_new_disable_gap(scroll_disable_gap_spin_box.value()))
+
+        scroll_disable_gap_spin_box.show()
+        scroll_disable_gap_box.addWidget(scroll_disable_gap_spin_box)
+
+        return scroll_disable_gap_box
+
+

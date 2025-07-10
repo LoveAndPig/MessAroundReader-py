@@ -14,7 +14,8 @@ class Configuration:
         self.__scroll_forward_speed = 10
         self.__scroll_backward_speed = 5
         self.__last_opened_file = ""
-        self.__scroll_disable_gap = 1000
+        self.__scroll_to_new_disable_gap = 500
+        self.__scroll_after_new_disable_gap = 500
 
         self.load_config()
 
@@ -33,7 +34,8 @@ class Configuration:
                 self.__scroll_forward_speed = configs.get('scrollForwardSpeed', 10)
                 self.__scroll_backward_speed = configs.get('scrollBackwardSpeed', 5)
                 self.__last_opened_file = configs.get('lastOpenedFile', '')
-                self.__scroll_disable_gap = configs.get('scrollDisableGap', 1000)
+                self.__scroll_to_new_disable_gap = configs.get('scrollToNewDisableGap', 500)
+                self.__scroll_after_new_disable_gap = configs.get('scrollAfterNewDisableGap', 500)
 
         except FileNotFoundError:
             print('未找到配置文件')
@@ -50,7 +52,8 @@ class Configuration:
             'scrollForwardSpeed': self.__scroll_forward_speed,
             'scrollBackwardSpeed': self.__scroll_backward_speed,
             'lastOpenedFile': self.__last_opened_file,
-            'scrollDisableGap': self.__scroll_disable_gap
+            'scrollToNewDisableGap': self.__scroll_to_new_disable_gap,
+            'scrollAfterNewDisableGap': self.__scroll_after_new_disable_gap
         }
 
         with open('config.json', 'w') as f:
@@ -110,11 +113,17 @@ class Configuration:
     def set_last_opened_file(self, file_path):
         self.__last_opened_file = file_path
 
-    def get_scroll_disable_gap(self):
-        return self.__scroll_disable_gap
+    def get_scroll_to_new_disable_gap(self):
+        return self.__scroll_to_new_disable_gap
 
-    def set_scroll_disable_gap(self, gap):
-        self.__scroll_disable_gap = gap
+    def set_scroll_to_new_disable_gap(self, gap):
+        self.__scroll_to_new_disable_gap = gap
+
+    def get_scroll_after_new_disable_gap(self):
+        return self.__scroll_after_new_disable_gap
+
+    def set_scroll_after_new_disable_gap(self, gap):
+        self.__scroll_after_new_disable_gap = gap
 
 
 config = Configuration()

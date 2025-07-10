@@ -138,9 +138,10 @@ class MessAroundReader(QMainWindow):
         if invisible_width > 0:
             if content_pos_x > -invisible_width:
                 # self.update_reach_side(False)
-                self.__current_reader.update_reach_side(False)
-                self.__content_label.move(
-                    content_pos_x - config.get_scroll_forward_speed(), self.__content_label.y())
+                if self.__current_reader.is_scroll_after_new_available():
+                    self.__current_reader.update_reach_side(False)
+                    self.__content_label.move(
+                        content_pos_x - config.get_scroll_forward_speed(), self.__content_label.y())
             else:
                 self.increase_index()
         else:
@@ -154,9 +155,10 @@ class MessAroundReader(QMainWindow):
         if invisible_width > 0:
             if content_pos_x < 0:
                 # self.update_reach_side(False)
-                self.__current_reader.update_reach_side(False)
-                self.__content_label.move(
-                    min(self.__content_label.x() + config.get_scroll_backward_speed(), 0), self.__content_label.y())
+                if self.__current_reader.is_scroll_after_new_available():
+                    self.__current_reader.update_reach_side(False)
+                    self.__content_label.move(
+                        min(self.__content_label.x() + config.get_scroll_backward_speed(), 0), self.__content_label.y())
             else:
                 self.decrease_index()
         else:
