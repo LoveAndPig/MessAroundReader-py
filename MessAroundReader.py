@@ -122,21 +122,9 @@ class MessAroundReader(QMainWindow):
         # invisible_width = content_width - self.size().width() + ReaderConstants.CONTENT_SCROLL_RIGHT_MARGIN
         invisible_width = content_width - self.size().width()
         if event.key() == Qt.Key.Key_Left:
-            if content_pos_x < 0:
-                self.__content_label.move(
-                    min(self.__content_label.x() + config.get_scroll_backward_speed(), 0), self.__content_label.y())
-            else:
-                pass
-                # 暂时放弃掉这个功能
-                # self.decrease_index()
+            self.go_backward()
         elif event.key() == Qt.Key.Key_Right:
-            if invisible_width > 0 and content_pos_x > -invisible_width:
-                self.__content_label.move(
-                    content_pos_x - config.get_scroll_forward_speed(), self.__content_label.y())
-            else:
-                pass
-                # 暂时放弃掉这个功能
-                # self.increase_index()
+            self.go_forward()
         elif event.key() == Qt.Key.Key_Up:
             self.decrease_index()
         elif event.key() == Qt.Key.Key_Down:

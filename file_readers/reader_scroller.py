@@ -22,6 +22,7 @@ class ReaderScroller:
         # self.__index = self.__index + 1 if self.__index < lines - 1 else lines - 1
         if self.is_scroll_available() and self.__index < lines - 1:
             self.__index += 1
+            self.__is_reach_side = False
             return True
 
         return False
@@ -33,6 +34,7 @@ class ReaderScroller:
         # self.__index = self.__index - 1 if self.__index > 0 else 0
         if self.is_scroll_available() and self.__index > 0:
             self.__index -= 1
+            self.__is_reach_side = False
             return True
 
         return False
