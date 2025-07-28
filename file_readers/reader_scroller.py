@@ -11,6 +11,7 @@ class ReaderScroller:
         self.__index = 0
         self.__inner_index = 0
 
+        self.__is_scroll_no_gap = False
         self.__is_reach_side = False
         self.__reach_side_time = time.perf_counter()
 
@@ -52,13 +53,13 @@ class ReaderScroller:
         if self.__reader is None:
             return False
         gap = time.perf_counter() - self.__reach_side_time
-        return gap * 1000 > config.get_scroll_to_new_disable_gap()
+        return gap * 1000 > config.get_scroll_to_new_disable_gap() or self.__is_scroll_no_gap
 
     def is_scroll_after_new_available(self) -> bool:
         if self.__reader is None:
             return False
         gap = time.perf_counter() - self.__switch_to_new_line_time
-        return gap * 1000 > config.get_scroll_after_new_disable_gap()
+        return gap * 1000 > config.get_scroll_after_new_disable_gap() or self.__is_scroll_no_gap
 
     def get_resource(self) -> Resource:
         if self.__reader is None:
@@ -94,3 +95,6 @@ class ReaderScroller:
 
     def update_history(self):
         history.update_history(self.__reader.get_file_path(), self.__index)
+
+    def set_scroll_no_gap(self, scroll_no_gap):
+        self.__is_scroll_no_gap = scroll_no_gap

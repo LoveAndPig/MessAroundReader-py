@@ -126,9 +126,15 @@ class MessAroundReader(QMainWindow):
         elif event.key() == Qt.Key.Key_Right:
             self.go_forward()
         elif event.key() == Qt.Key.Key_Up:
+            self.__current_reader.set_scroll_no_gap(True)
             self.decrease_index()
         elif event.key() == Qt.Key.Key_Down:
+            self.__current_reader.set_scroll_no_gap(True)
             self.increase_index()
+
+    def keyReleaseEvent(self, event: QKeyEvent, /) -> None:
+        if event.key() == Qt.Key.Key_Up or event.key() == Qt.Key.Key_Down:
+            self.__current_reader.set_scroll_no_gap(False)
 
     def go_forward(self):
         content_width = self.__content_label.width()

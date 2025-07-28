@@ -115,6 +115,9 @@ class FileReader:
     def update_reach_side(self, reach):
         self.__scroller.update_reach_side(reach)
 
+    def set_scroll_no_gap(self, scroll_no_gap):
+        self.__scroller.set_scroll_no_gap(scroll_no_gap)
+
     @staticmethod
     def get_test_data():
         test_resources = []
