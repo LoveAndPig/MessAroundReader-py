@@ -314,6 +314,8 @@ class MessAroundReader(QMainWindow):
                 if load_history:
                     self.__current_reader.jump_to_index(history.get_index(file_path))
                 self.emit_contents_changed()
+            else:
+                history.remove_invalid_history(file_path)
 
     def update_history(self, file_path):
         if self.__current_reader is None:
@@ -324,6 +326,7 @@ class MessAroundReader(QMainWindow):
 
     def save_history(self):
         history.update_history(self.__current_reader.get_file_path(), self.__current_reader.get_index())
+        history.clear_invalid_history_from_db()
         history.save_history()
 
     def jump_to_index(self, index):

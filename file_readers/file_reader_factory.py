@@ -2,6 +2,7 @@ from file_readers.epub_file_reader import EPUBFileReader
 from file_readers.mobi_file_reader import MobiFileReader
 from file_readers.word_file_reader import WordFileReader
 from file_readers.text_file_reader import TextFileReader
+from utils.file_utils import FileUtils
 
 
 class FileReaderFactory:
@@ -20,6 +21,9 @@ class FileReaderFactory:
             return None
 
     def get_file_reader(self, file_path):
+        if not FileUtils.is_file_exists(file_path):
+            return None
+
         if file_path in self.__reader_dict:
             return self.__reader_dict[file_path]
         else:

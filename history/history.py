@@ -4,6 +4,7 @@ import sqlite3
 class History:
     def __init__(self):
         self.__history = {}
+        self.__invalid_history = []
 
         self.__connection = sqlite3.connect("history.db")
         self.__cursor = self.__connection.cursor()
@@ -17,6 +18,18 @@ class History:
 
     def update_history(self, file_path, index):
         self.__history[file_path] = index
+
+    def remove_invalid_history(self, file_path):
+        del self.__history[file_path]
+        self.__invalid_history.append(file_path)
+
+    def clear_invalid_history_from_db(self):
+        if self.__invalid_history:
+            placeholders = ','.join('?' * len(self.__invalid_history))
+            query = f"DELETE FROM history WHERE file_path IN ({placeholders})"
+            self.__cursor.execute(query, self.__invalid_history)
+            self.__connection.commit()
+            self.__invalid_history.clear()
 
     def load_history(self):
         self.__cursor.execute("""SELECT file_path, file_index FROM history""")
