@@ -209,3 +209,4 @@ __marimo__/
 config.json
 history.db
 build.bat
+/lib

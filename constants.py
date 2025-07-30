@@ -8,6 +8,14 @@ class PressPurpose(Enum):
     NONE = 4,
 
 
+class ShorCutTarget(Enum):
+    PREVIOUS_LINE = 1,
+    NEXT_LINE = 2,
+    MOVE_BACKWARD = 3,
+    MOVE_FORWARD = 4,
+    NONE = 5,
+
+
 class ReaderConstants:
     CONTENT_SCROLL_RIGHT_MARGIN = 150
     LONG_SCROLL_BRAKE = 6

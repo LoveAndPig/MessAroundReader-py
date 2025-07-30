@@ -15,6 +15,7 @@ from ui.ClickableLabel import ClickableLabel
 from ui.ConfigDialog import ConfigDialog
 from ui.HistoryDialog import HistoryDialog
 from ui.ImageDialog import ImageDialog
+from ui.ShortCutDialog import ShortCutDialog
 
 
 class MessAroundReader(QMainWindow):
@@ -45,6 +46,8 @@ class MessAroundReader(QMainWindow):
         self.init_history_dialog()
 
         self.__image_dialog = ImageDialog()
+
+        self.__keys_dialog = ShortCutDialog()
 
         self.__tray_icon = QSystemTrayIcon(self)
         self.set_reader_tray_icon()
@@ -121,19 +124,19 @@ class MessAroundReader(QMainWindow):
         content_pos_x = self.__content_label.x()
         # invisible_width = content_width - self.size().width() + ReaderConstants.CONTENT_SCROLL_RIGHT_MARGIN
         invisible_width = content_width - self.size().width()
-        if event.key() == Qt.Key.Key_Left:
+        if event.key() == config.get_move_backward_key():
             self.go_backward()
-        elif event.key() == Qt.Key.Key_Right:
+        elif event.key() == config.get_move_forward_key():
             self.go_forward()
-        elif event.key() == Qt.Key.Key_Up:
+        elif event.key() == config.get_previous_line_key():
             self.__current_reader.set_scroll_no_gap(True)
             self.decrease_index()
-        elif event.key() == Qt.Key.Key_Down:
+        elif event.key() == config.get_next_line_key():
             self.__current_reader.set_scroll_no_gap(True)
             self.increase_index()
 
     def keyReleaseEvent(self, event: QKeyEvent, /) -> None:
-        if event.key() == Qt.Key.Key_Up or event.key() == Qt.Key.Key_Down:
+        if event.key() == config.get_previous_line_key() or event.key() == config.get_next_line_key():
             self.__current_reader.set_scroll_no_gap(False)
 
     def go_forward(self):
@@ -190,6 +193,7 @@ class MessAroundReader(QMainWindow):
         self.show_jump_to_chapter_menu(menu)
         menu.addSeparator()
         self.show_style_edit_menu(menu)
+        self.show_key_edit_menu(menu)
         menu.addSeparator()
         self.show_exit_menu(menu)
         menu.exec(pos)
@@ -221,6 +225,10 @@ class MessAroundReader(QMainWindow):
     def show_style_edit_menu(self, menu):
         action = menu.addAction('设置')
         action.triggered.connect(lambda: self.__configDialog.exec())
+
+    def show_key_edit_menu(self, menu):
+        action = menu.addAction('快捷键')
+        action.triggered.connect(lambda: self.__keys_dialog.exec())
 
     def show_exit_menu(self, menu):
         action = menu.addAction('退出')
